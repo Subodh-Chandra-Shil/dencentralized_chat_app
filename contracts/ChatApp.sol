@@ -88,7 +88,51 @@ contract chatApp {
         _addFriend(friend_key, msg.sender, userList[msg.sender].name);
     }
 
-    function checkAlreadyFriend() {}
-    function isFriendRequestAccepted returns(bool){}
-    function _addFriend();
+    // CHECK friend is already exists in the friendlist
+    //* Way 01
+    function checkAlreadyFriend(address user_key, address friend_key) internal view returns (bool) {
+
+        // Cache the length of both user_key and friend_key
+        uint256 len1 = userList[user_key].friendList.length;
+        uint256 len2 = userList[friend_key].friendList.length;
+
+        // compares lengths to determine which list is shorter
+        // iterate through shorter loop will optimize gas cost
+        if (len1 > len2) {
+            (user_key, friend_key) = (friend_key, user_key);
+        }
+
+        for (uint256 i = 0; i < len1; i++) {
+            if (userList[user_key].friendList[i].pubkey == friend_key) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    //* Way 02
+        /*     function checkAlreadyFriend(address user_key, address friend_key) internal view returns (bool) {
+                friend[] memory friends = userList[user_key].friendList;
+                uint256 len = friends.length;
+
+                for (uint256 i = 0; i < len; i++) {
+                    if (friends[i].pubkey == friend_key) {
+                        return true;
+                    }
+                }
+
+                return false;
+            } */
+
+
+    // CHECK whether friend request accepted or not
+    function isFriendRequestAccepted returns(bool){
+
+    }
+
+    //
+    function _addFriend() {
+
+    }
 }
