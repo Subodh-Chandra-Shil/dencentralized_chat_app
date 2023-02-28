@@ -8,6 +8,7 @@ Documentation Manual:
 * master user: who will create account = msg.sender
  */
 
+/* structs  */
 contract chatApp {
     // 'user' struct
     struct user {
@@ -26,6 +27,14 @@ contract chatApp {
         address msgSender;
         uint256 timestamp;
     }
+
+    struct AllUserStruck {
+        string name;
+        address accountAddress;
+    }
+
+    // array out of 'AllUsers'
+    AllUserStruck[] getAllUsers;
 
     mapping(address => user) userList;
     mapping(bytes32 => message[]) allMessages;
@@ -205,4 +214,11 @@ contract chatApp {
 
     // Read messages
     function readMessage(address friend_key)
+        external
+        view
+        returns (message[] memory)
+    {
+        bytes32 chatCode = _getChatCode(msg.sender, friend_key);
+        return allMessages[chatCode];
+    }
 }
