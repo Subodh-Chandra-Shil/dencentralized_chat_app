@@ -5,9 +5,9 @@ pragma solidity >=0.4.5 <0.9.0;
 Documentation Manual:
 1. ERH: Error Handling
 2. CK: Check condition
-3. 
-
+* master user: who will create account = msg.sender
  */
+
 contract chatApp {
     // 'user' struct
     struct user {
@@ -29,6 +29,14 @@ contract chatApp {
 
     mapping(address => user) userList;
     mapping(bytes32 => message[]) allMessages;
+
+    //* friend request list
+    // here stores all user who makes request as friend
+    mapping(address => user[]) FriendRequestList;
+
+    //* friend list
+    // every request that accpted will become friend
+    mapping(address => friend[]) addedFriend;
 
     // CK: Whether the user already exist
     function checkUserExists(address _pubkey) public view returns (bool) {
@@ -81,7 +89,11 @@ contract chatApp {
         require(msg.sender != friend_key, "Can't add yourself as a friend");
 
         // CK: friend request approval
-        require(isFriendRequestAccepted(msg.sender, friend_key, name) == true, "The friend request is denied");
+        require(
+            isFriendRequestAccepted(msg.sender, friend_key) == true,
+            "The friend request is denied"
+        );
+
         // user adding a friend into friendlist
         _addFriend(msg.sender, friend_key, name);
         // friend need to add up user as friend into friendlist
@@ -90,8 +102,11 @@ contract chatApp {
 
     // CHECK friend is already exists in the friendlist
     //* Way 01
-    function checkAlreadyFriend(address user_key, address friend_key) internal view returns (bool) {
-
+    function checkAlreadyFriend(address user_key, address friend_key)
+        internal
+        view
+        returns (bool)
+    {
         // Cache the length of both user_key and friend_key
         uint256 len1 = userList[user_key].friendList.length;
         uint256 len2 = userList[friend_key].friendList.length;
@@ -112,7 +127,7 @@ contract chatApp {
     }
 
     //* Way 02
-        /*     function checkAlreadyFriend(address user_key, address friend_key) internal view returns (bool) {
+    /*     function checkAlreadyFriend(address user_key, address friend_key) internal view returns (bool) {
                 friend[] memory friends = userList[user_key].friendList;
                 uint256 len = friends.length;
 
@@ -125,14 +140,69 @@ contract chatApp {
                 return false;
             } */
 
-
     // CHECK whether friend request accepted or not
-    function isFriendRequestAccepted returns(bool){
+    // priviledged to friend; friend can either reject or approve the friend request
 
+    /*     function isFriendRequestAccepted(
+            address _friendAddress,
+            address _userAddress
+        ) public returns (bool) {
+
+            uint256 AddedFriendList = addedFriend[_friendAddress].length;
+
+            for(uint256 i = 0; i <; i++)  {
+                if(addedFriend[_userAddress].pubkey == _userAddress) return true;
+            }
+            else false;
+        }
+    */
+
+    // function that will add a friend
+    function _addFriend(
+        address me,
+        address friend_key,
+        string memory name
+    ) internal {
+        friend memory newFriend = friend(friend_key, name);
+        userList[me].friendList.push(newFriend);
     }
 
-    //
-    function _addFriend() {
-
+    function getMyFriendList() external view returns (friend[] memory) {
+        return userList[msg.sender].friendList;
     }
+
+    function _getChatCode(address pubkey1, address pubkey2)
+        internal
+        pure
+        returns (bytes32)
+    {
+        if (pubkey1 < pubkey2) {
+            return keccak256(abi.encodePacked(pubkey1, pubkey2));
+        } else return keccak256((abi.encodePacked(pubkey1, pubkey2)));
+    }
+
+    // following function will let user send messages to others users
+    function sendMessage(address friend_key, string calldata _msg) external {
+        // the master user must be existed
+        require(checkUserExists(msg.sender), "Create an account first");
+
+        // CK: whether the friend exists
+        require(checkUserExists(friend_key), "User not yet registered");
+
+        // CK: whether they already friend or not
+        // no reason to send friend requests if already are friends
+        require(checkAlreadyFriend(msg.sender, friend_key));
+
+        // chatCode requires to store messages
+        bytes32 chatCode = _getChatCode(msg.sender, friend_key);
+
+        // message we want to send
+        message memory newMsg = message(msg.sender, block.timestamp);
+
+        // storing all the messages
+        allMessages[chatCode].push(newMsg);
+    }
+
+    // Read messages
+    function readMessage(address friend_key)
 }
