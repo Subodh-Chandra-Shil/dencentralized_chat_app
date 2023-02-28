@@ -33,7 +33,7 @@ contract chatApp {
         address accountAddress;
     }
 
-    // array out of 'AllUsers'
+    // array of type 'AllUserStruck' struct type
     AllUserStruck[] getAllUsers;
 
     mapping(address => user) userList;
@@ -67,6 +67,8 @@ contract chatApp {
         );
 
         userList[msg.sender].name = _name;
+
+        getAllUsers.push(AllUserStruck(_name, msg.sender));
     }
 
     // GET username
@@ -220,5 +222,10 @@ contract chatApp {
     {
         bytes32 chatCode = _getChatCode(msg.sender, friend_key);
         return allMessages[chatCode];
+    }
+
+    // function that can fetch all registered users
+    function getAllAppUser() public view returns (AllUserStruck[] memory) {
+        return getAllUsers;
     }
 }
